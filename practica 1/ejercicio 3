@@ -1,0 +1,117 @@
+{3.- Netflix ha publicado la lista de películas que estarán disponibles durante el mes de 
+diciembre de 2022. De cada película se conoce: código de película, código de género (1: acción, 
+2: aventura, 3: drama, 4: suspenso, 5: comedia, 6: bélico, 7: documental y 8: terror) y puntaje 
+promedio otorgado por las críticas. 
+Implementar un programa que invoque a módulos para cada uno de los siguientes puntos:
+
+*
+.}
+program netflix;
+
+type
+	rango1 = 1..8;
+	pelicula= record
+		cod:integer;
+		genero:rango1;
+		puntaje:real;
+	end;
+	
+	lista = ^nodo;
+	nodo = record
+		dato:pelicula;
+		sig:lista;
+	end;
+	
+	vectorpuntajes = array[rango1] of integer;
+	
+	{a. Lea los datos de películas, los almacene por orden de llegada y agrupados por código de 
+género, y retorne en una estructura de datos adecuada. La lectura finaliza cuando se lee el 
+código de la película -1.}
+	
+procedure leerpelicula (var p:pelicula);
+begin
+	writeln ('ingrese codigo');
+	read (p.cod);
+	if (p.cod <>-1) then begin
+		p.genero:= Random (8)+1;
+		writeln ('el genero es:',p.genero);
+		p.puntaje:= Random (10)+1;
+		writeln ('el puntaje es:',p.puntaje);
+	end;
+end;
+
+procedure insertarlista (var L:lista);
+
+{ b. Genere y retorne en un vector, para cada género, el código de película con mayor puntaje 
+obtenido entre todas las críticas, a partir de la estructura generada en a)..}
+function maximo (L:lista):integer;
+var
+	maxcod:integer;
+	maxpun:real;
+begin
+	maxcod:=0;
+	maxpunt:=0;
+	while (L <> nil) do
+		if (L^.dato.puntaje > maxpun) then begin
+			maxpun:=L^.dato.puntaje;
+			maxcod:= L^.dato.codigo;
+			L:=L^.sig;
+		end;
+	maximo:= maxcod;
+end;
+
+procedure cargarvector (var v:vectorpuntajes; L:lista);
+var
+	actual:rango1;
+	aux:integer;
+begin
+	while (L <> nil) do begin
+		actual:= L^.dato.genero;
+		aux:=0;
+		while (L <> nil) and (actual = L^.dato.genero) do begin
+			aux:= maximo;
+			L:= L^.sig;
+		v[L^.dato.genero]:= aux;
+	end;
+end;
+
+{c. Ordene los elementos del vector generado en b) por puntaje utilizando alguno de los dos 
+métodos vistos en la teoría. }
+
+procedure seleccion (var v:vector);
+var
+	i,j,pos:rango1;
+	item:pelicula;
+begin
+	for i:= 1 to 7 do begin
+		pos:=i;
+		j:=i-1;
+		for j:= i+1 to 8 do 
+			if (v[j]> v[pos]) then
+				pos:=j
+		    item:=v[pos];
+		    v[pos]:= v[i];
+		    v[i]:=item;
+end;
+
+{d. Muestre el código de película con mayor puntaje y el código de película con menor puntaje, 
+del vector obtenido en el punto c)}
+function max (v:vector):rango1;
+var
+	maxcod:integer;
+	i:integer;
+begin
+	for i:= 1 to 8 do 
+		if (v[i].puntaje > max)
+end;
+
+var
+	L:lista;
+	dimL:integer;
+	v:vector;
+BEGIN
+	Randomize;
+	insertarlista(L);
+	cargarvector(v,8);
+	seleccion(v,8);
+END.
