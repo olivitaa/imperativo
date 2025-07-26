@@ -1,0 +1,177 @@
+{3. Un supermercado requiere el procesamiento de sus productos. De cada producto se
+conoce código, rubro (1..10), stock y precio unitario. Se pide:}
+
+program supermercado;
+type
+	rangorub = 1..10;
+	producto = record
+		cod:integer;
+		rubro:rangorub;
+		stock:integer;
+		precio:real;
+	end;
+	
+	datoarbol = record
+		cod:integer;
+		stock:integer;
+		precio:real;
+	end;
+	
+	arbol = ^nodo;
+	nodo = record
+		dato:datoarbol;
+		hi:arbol;
+		hd:arbol;
+	end;
+	
+	vector = array [rangorub] of arbol;
+	
+//modulos
+{a) Generar una estructura adecuada que permita agrupar los productos por rubro. A su
+vez, para cada rubro, se requiere que la búsqueda de un producto por código sea lo
+más eficiente posible. El ingreso finaliza con el código de producto igual a 0.}
+
+procedure leerproducto (var p:producto);
+begin
+	writeln ('ingrese codigo de producto, termina con 0');
+	readln (p.cod);
+	if (p.cod <> 0) then begin
+		p.rubro:= Random (9)+ 1;
+		p.stock:= Random (99);
+		p.precio:= Random (999);
+	end;
+end;
+
+procedure insertar (var a:arbol; p:producto);
+var
+	nue:arbol;
+begin
+	if (a=nil) then begin
+		new (nue);
+		nue^.dato.cod:=p.cod;
+		nue^.dato.stock:=p.stock;
+		nue^.dato.precio:=p.precio;
+		nue^.hi:=nil;
+		nue^.hd:=nil;
+		a:=nue
+	end
+	else begin
+		if (p.cod <= a^.dato.cod) then
+			insertar(a^.hi,p)
+		else
+			insertar (a^.hd,p);
+	end;
+end;
+
+procedure cargarvector (var v:vector);
+var
+	p:producto;
+begin
+	leerproducto(p);
+	while (p.cod <> 0) do begin
+		insertar (v[p.rubro], p);
+		leerproducto (p);
+	end;
+end;
+
+{b) Implementar un módulo que reciba la estructura generada en a), un rubro y un código
+de producto y retorne si dicho código existe o no para ese rubro.}
+
+function buscar (a:arbol; cod:integer):boolean;
+begin
+	if (a=nil) then
+		buscar:=false
+	else begin
+		if (cod < a^.dato.cod) then
+			buscar:= buscar (a^.hi,cod)
+		else begin
+			if (cod > a^.dato.cod) then
+				buscar:= buscar (a^.hd,cod)
+			else
+				buscar:=true;
+		end;
+	end;
+end;
+
+function existe (v:vector; rub:rangorub; cod:integer):boolean;
+begin
+	existe:= buscar (v[rub],cod);
+end;
+
+{c) Implementar un módulo que reciba la estructura generada en a), y retorne, para cada
+rubro, el código y stock del producto con mayor código.}
+
+procedure retornarmayorcod (a:arbol);
+begin
+	if (a^.hd = nil) then
+		writeln ('el codigo mas grande es ' , a^.dato.cod , ' con stock de ' , a^.dato.stock)
+	else
+		retornarmayorcod (a^.hd);
+end;
+
+{d) Implementar un módulo que reciba la estructura generada en a), dos códigos y
+retorne, para cada rubro, la cantidad de productos con códigos entre los dos valores
+ingresados.}
+
+function cantidad (a:arbol; cod1:integer; cod2:integer):integer;
+begin
+	if (a=nil) then
+		cantidad:=0
+	else begin
+		if (a^.dato.cod < cod1) then
+			cantidad:= cantidad (a^.hd,cod1,cod2)
+		else if (a^.dato.cod > cod2) then
+			cantidad:= cantidad (a^.hi,cod1,cod2)
+		else
+			cantidad:= 1 + cantidad (a^.hi,cod1,cod2) + cantidad (a^.hd,cod1,cod2);
+	end;
+end;
+
+procedure imprimir (a:arbol);
+begin
+	if (a<>nil) then begin
+		writeln ('cod ', a^.dato.cod)
+		writeln ('stock: ', a^.dato.stock);
+		writeln ('precio: $', a^.dato.precio);
+		writeln ('--------------');
+		imprimir (a^.hi);
+		imprimir (a^.hd);
+	end;
+end;
+
+//programa principal
+var
+	v:vector;
+	i:integer;
+	inb:boolean;
+	rub:rangorub;
+	cod:integer;
+	cod1,cod2:integer;
+begin
+	for i:= 1 to 10 do 
+		v[i]:=nil;
+	//inciso a
+	cargarvector (v);
+	for i:= 1 to 10 do
+		writeln ('rubro ' ,i);
+		imprimir (v[i]);
+	//inciso b
+	writeln ('ingrese un rubro y codigo a buscar');
+	readln (rub);
+	readln (cod);
+	inb:= existe (v,rub,cod);
+	if (inb = true) then
+		writeln ('el codigo existe')
+	else 
+		writeln ('el codigo no existe');
+		
+	//inciso c
+	for i:= 1 to 10 do 
+		retornarmayorcod (v[i]);
+		
+	//inciso d
+	writeln ('ingrese dos codigos');
+	readln (cod1); readln (cod2);
+	for i:= 1 to 10 do
+		 writeln ('la cantidad de productos con codigos entre ', cod1, ' y ' , cod2, ' del rubro ' , i,' es ' ,cantidad (v[i],cod1,cod2));
+end.
