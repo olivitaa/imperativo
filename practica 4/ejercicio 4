@@ -1,0 +1,403 @@
+{4. Una biblioteca nos ha encargado procesar la información de los préstamos realizados
+durante el año 2021. De cada préstamo se conoce el ISBN del libro, el número de socio,
+día y mes del préstamo y cantidad de días prestados. Implementar un programa con:}
+program biblioteca;
+type
+	rangodia =1..31;
+	rangomes = 1..12;
+	datos = record
+		socio:integer;
+		dia:rangodia;
+		mes:rangomes;
+		cantdias:integer;
+	end;
+	prestamo = record
+		isbn:integer;
+		socio:integer;
+		dia:rangodia;
+		mes:rangomes;
+		cantdias:integer;
+	end;
+	
+	lista = ^nodolista;
+	nodolista = record
+		dato:datos;
+		sig:lista;
+	end;
+	
+	arbol = ^nodo;
+	nodo = record
+		dato: prestamo;
+		hi:arbol;
+		hd:arbol;
+	end;
+	
+	datoarbol2 = record
+		isbn:integer;
+		list:lista;
+	end;
+	
+	arbol2 = ^nodo2;
+	nodo2 = record
+		dato:datoarbol2;
+		hi:arbol2;
+		hd:arbol2;
+	end;
+	
+	datoslista2 = record
+		isbn:integer;
+		cant:integer;
+	end;
+	
+	lista2 = ^incisoe;
+	incisoe = record
+		elem:datoslista2;
+		sig:lista2;
+	end;
+
+{
+a. Un módulo que lea préstamos y retorne 2 estructuras de datos con la información de
+los préstamos. La lectura de los préstamos finaliza con ISBN 0. Las estructuras deben
+ser eficientes para buscar por ISBN.}
+
+procedure leerprestamo (var p:prestamo);
+begin
+	writeln ('ingrese isbn, termina con 0');
+	read (p.isbn);
+	if (p.isbn <> 0) then	begin
+		p.socio:= Random (999);
+		p.dia:= Random (31)+1;
+		p.mes:= Random(12)+1;
+		p.cantdias := Random (99);
+		writeln ('socio: ', p.socio, ' dia: ', p.dia, ' mes: ', p.mes, ' cantdias: ', p.cantdias);
+	end;
+end; 
+
+
+{
+i. En una estructura cada préstamo debe estar en un nodo. Los ISBN repetidos
+insertarlos a la derecha.}
+
+procedure asignar (p: prestamo; var d:datos);
+begin
+	d.socio:= p.socio;
+	d.dia:= p.dia;
+	d.mes:= p.mes;
+	d.cantdias:= p.cantdias;
+end;
+ 
+procedure arbol1 (var a:arbol; p:prestamo);
+var
+	nue:arbol;
+begin
+	if (a=nil) then begin
+		new (nue);
+		nue^.dato:=p;
+		nue^.hi:=nil;
+		nue^.hd:=nil;
+		a:=nue;
+	end
+	else begin
+		if (p.isbn >= a^.dato.isbn) then
+			arbol1 (a^.hd,p)
+		else
+			arbol1 (a^.hi,p);
+	end;
+end;
+
+
+{
+ii. En otra estructura, cada nodo debe contener todos los préstamos realizados al ISBN.
+(prestar atención sobre los datos que se almacenan).} 
+
+procedure agregaradelante (var l:lista; d:datos);
+var
+	nue:lista;
+begin
+	if (l=nil) then begin
+		new (nue);
+		nue^.dato:=d;
+		nue^.sig:=nil;
+	end
+	else
+		nue^.sig:=l;
+	l:=nue;
+end;
+
+procedure cargararbol2 (var a2:arbol2; d:datos; isbn:integer);
+var
+	nue:arbol2;
+begin
+	if (a2=nil) then begin
+		new (nue);
+		nue^.dato.isbn:= isbn;
+		nue^.dato.list^.dato:= d;
+		nue^.hi:=nil;
+		nue^.hd:=nil;
+		a2:=nue;
+	end
+	else begin
+		if (isbn < a2^.dato.isbn) then
+			cargararbol2 (a2^.hi,d,isbn)
+		else begin
+			if (isbn > a2^.dato.isbn) then
+				cargararbol2 (a2^.hd,d,isbn)
+			else
+				agregaradelante (a2^.dato.list,d)
+		end;
+	end;
+end;
+
+procedure cargararboles (Var a:arbol; var a2:arbol2);
+var
+	d:datos;
+	p:prestamo;
+begin
+	leerprestamo (p);
+	while (p.isbn <> 0) do begin
+		arbol1 (a,p);
+		asignar (p,d);
+		cargararbol2 (a2,d,p.isbn);
+		leerprestamo (p);
+	end;
+end;
+
+
+{b. Un módulo recursivo que reciba la estructura generada en i. y retorne el ISBN más
+grande.}
+
+function maximo (a:arbol):integer;
+begin
+	if (a^.hd=nil) then
+		maximo:= a^.dato.isbn
+	else
+		maximo:= maximo (a^.hd);
+end;	 
+
+{c. Un módulo recursivo que reciba la estructura generada en ii. y retorne el ISBN más
+pequeño.}
+
+function minimo (a2:arbol2):integer;
+begin
+	if (a2^.hi = nil) then
+		minimo:= a2^.dato.isbn
+	else
+		minimo:= minimo (a2^.hi);
+end; 
+
+{d. Un módulo recursivo que reciba la estructura generada en i. y un número de socio. El
+módulo debe retornar la cantidad de préstamos realizados a dicho socio.}
+
+function cantprestamos (a:arbol; numsocio:integer):integer;
+begin
+	if (a = nil) then
+		cantprestamos:=0
+	else begin
+		if (a^.dato.isbn > numsocio) then
+			cantprestamos := cantprestamos (a^.hi,numsocio)
+		else begin
+			if (a^.dato.isbn < numsocio) then
+				cantprestamos:= cantprestamos (a^.hd,numsocio)
+			else
+				cantprestamos:= 1 + cantprestamos (a^.hd,numsocio);
+		end;
+	end;
+end;
+
+{
+e. Un módulo recursivo que reciba la estructura generada en ii. y un número de socio. El
+módulo debe retornar la cantidad de préstamos realizados a dicho socio.}
+
+function contar (l:lista):integer;
+begin
+	if (l = nil) then
+		contar:= 0
+	else
+		contar:= 1 + contar(l^.sig);
+end;
+
+function cantprestamos2 (a2:arbol2; numsocio:integer):integer;
+begin
+	if (a2 = nil) then
+		cantprestamos2:=0
+	else begin
+		if (a2^.dato.list^.dato.socio > numsocio) then
+			cantprestamos2 (a2^.hi,numsocio)
+		else if (a2^.dato.list^.dato.socio < numsocio) then
+			cantprestamos2 (a2^.hd,numsocio)
+		else
+			cantprestamos2:= contar (a2^.dato.list);
+	end;
+end;
+
+{f. Un módulo que reciba la estructura generada en i. y retorne una nueva estructura
+ordenada ISBN, donde cada ISBN aparezca una vez junto a la cantidad total de veces
+que se prestó.}
+
+function contararbol1 (a:arbol; isbn:integer):integer;
+begin
+	if (a =nil) then
+		contararbol1:=0
+	else begin
+		if (a^.dato.isbn > isbn) then
+			contararbol1 (a^.hi,isbn)
+		else if (a^.dato.isbn < isbn) then
+			contararbol1 (a^.hd,isbn)
+		else
+			contararbol1:= 1 + contararbol1 (a^.hd,isbn);
+	end;
+end;
+
+procedure agregaratras (Var l:lista2; d:datoslista2);
+var
+	nue:lista2;
+begin
+	if (l = nil) then begin
+		new (nue);
+		nue^.elem:=d;
+		nue^.sig:=nil;
+	end
+	else
+		l^.sig:=nue;
+	l:=nue;
+end;	
+
+procedure cargarlista2 (var l:lista2; a:arbol);
+var
+	d:datoslista2;
+begin
+	while (a <> nil) do begin
+		cargarlista2 (l,a^.hi);
+		d.isbn:= a^.dato.isbn;
+		d.cant:= contararbol1(a,d.isbn);
+		agregaratras (l,d);
+		cargarlista2 (l,a^.hd);
+	end;
+end;
+
+{g. Un módulo que reciba la estructura generada en ii. y retorne una nueva estructura
+ordenada ISBN, donde cada ISBN aparezca una vez junto a la cantidad total de veces
+que se prestó.}
+
+function contarnodos (l:lista):integer;
+begin
+	if (l = nil) then
+		contarnodos:=0
+	else
+		contarnodos:= 1 + contarnodos (l^.sig);
+end;
+
+procedure cargarlista3 (var l:lista2; a2:arbol2);
+var
+	d:datoslista2;
+begin
+	while (a2 <> nil) do begin
+		cargarlista3 (l,a2^.hi);
+		d.isbn:= a2^.dato.isbn;
+		d.cant:= contarnodos (a2^.dato.list);
+		agregaratras (l,d);
+		cargarlista3 (l,a2^.hd);
+	end;
+end;
+
+{h. Un módulo recursivo que reciba la estructura generada en g. y muestre su contenido.}
+
+procedure imprimir (l:lista2);
+
+begin
+	if (l <> nil) then begin
+		writeln ('el libro de isbn ' , l^.elem.isbn, ' fue prestado ' , l^.elem.cant, ' veces');
+		imprimir (l^.sig);
+	end;
+end;
+
+{i. Un módulo recursivo que reciba la estructura generada en i. y dos valores de ISBN. El
+módulo debe retornar la cantidad total de préstamos realizados a los ISBN
+comprendidos entre los dos valores recibidos (incluidos).}
+
+function cantidadtotalprestamos (inf:integer; sup:integer; a:arbol):integer;
+begin
+	if (a = nil) then
+		cantidadtotalprestamos:= 0
+	else begin
+		if (a^.dato.isbn < inf) then
+			cantidadtotalprestamos:= cantidadtotalprestamos (inf,sup,a^.hd)
+		else begin
+			if (a^.dato.isbn > sup) then
+				cantidadtotalprestamos := cantidadtotalprestamos (inf,sup, a^.hi)
+			else
+				cantidadtotalprestamos:= 1 + cantidadtotalprestamos(inf,sup,a^.hi) + cantidadtotalprestamos (inf,sup,a^.hd);
+		end;
+	end;		
+end;
+
+{j. Un módulo recursivo que reciba la estructura generada en ii. y dos valores de ISBN. El
+módulo debe retornar la cantidad total de préstamos realizados a los ISBN
+comprendidos entre los dos valores recibidos (incluidos).}
+
+function cantidadtotalprestamos2 (a2:arbol2; inf:integer; sup:integer):integer;
+begin
+	if (a2=nil) then
+		cantidadtotalprestamos2:=0
+	else begin
+		if (a2^.dato.isbn < inf) then
+			cantidadtotalprestamos2:= cantidadtotalprestamos2 (a2^.hd, inf,sup)
+		else begin
+			if (a2^.dato.isbn > sup) then
+				cantidadtotalprestamos2:= cantidadtotalprestamos2 (a2^.hi,inf,sup)
+			else
+				cantidadtotalprestamos2:= 1 + cantidadtotalprestamos2 (a2^.hi,inf,sup) + cantidadtotalprestamos2 (a2^.hd, inf,sup);
+
+		end;
+	end;
+end;
+
+//programa principal
+var
+	a:arbol;
+	a2:arbol2;
+	numsocio:integer;
+	l2, l3:lista2;
+	inf,sup:integer;
+begin
+	Randomize;
+	//inciso a
+	a:=nil;
+	a2:= nil;
+	cargararboles (a,a2);
+	
+	//inciso b
+	writeln ('el isbn mas grande es: ' , maximo (a));
+	//inciso c
+	writeln ('el isbn mas pequeño es: ' , minimo (a2));
+	
+	//inciso d
+	writeln ('ingrese socio');
+	read (numsocio);
+	writeln ('arbol 1');
+	writeln ('la cantidad de prestamos que realizo el socio ', numsocio, ' es: ', cantprestamos(a,numsocio));
+	
+	//inciso e
+	writeln ('arbol 2');
+	writeln ('la cantidad de prestamos que realizo el socio ', numsocio, ' es: ', cantprestamos2(a2,numsocio));
+	
+	//inciso f
+	l2:=nil;
+	cargarlista2 (l2,a);
+	
+	//inciso g
+	l3:=nil;
+	cargarlista3 (l3,a2);
+	
+	//inciso h
+	
+	imprimir (l3);
+	writeln ('ingresar limite inferior y superior');
+	readln (inf);
+	readln (sup);
+	writeln ('arbol 1');
+	writeln ('la cantidad de prestamos realizados a los libros con isbn entre ' , inf , ' y ', sup, ' es: ', cantidadtotalprestamos(inf,sup,a));
+	writeln ('arbol 2');
+	writeln ('la cantidad de prestamos realizados a los libros con isbn entre ' , inf , ' y ', sup, ' es: ', cantidadtotalprestamos2(a2,inf,sup));
+end.
+
