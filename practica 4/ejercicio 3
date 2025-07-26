@@ -1,0 +1,150 @@
+{3. Implementar un programa modularizado para una librería. Implementar módulos para:
+a. Almacenar los productos vendidos en una estructura eficiente para la búsqueda por
+código de producto. De cada producto deben quedar almacenados su código, la
+cantidad total de unidades vendidas y el monto total. De cada venta se lee código de
+venta, código del producto vendido, cantidad de unidades vendidas y precio unitario.}
+program untitled;
+type
+	producto = record
+		cod:integer;
+		cant:integer;
+		monto:real;
+	end;
+	
+	venta = record
+		codigo:integer;
+		codprod:integer;
+		vendidas:integer;
+		precio:real;
+	end;
+	
+	arbol = ^nodo;
+	nodo = record
+		dato:producto;
+		hi:arbol;
+		hd:arbol;
+	end;
+
+//modulos
+
+{El ingreso de las ventas finaliza cuando se lee el código de venta -1.}
+
+procedure leerventa (var v:venta);
+begin
+	writeln ('ingrese codigo de venta, termina con -1');
+	readln (v.codigo);
+	if (v.codigo <> -1) then begin
+		v.codprod:= Random (999)+1;
+		v.vendidas:= Random (11)+1;
+		v.precio:= Random (999)+1;
+		writeln ('la informacion generada es: ');
+		writeln ('codigo de producto: ', v.codprod);
+		writeln ('cantidad de unidades vendidas: ', v.vendidas);
+		writeln ('precio unitario: ', v.precio);
+		writeln();
+		writeln('-----------');
+		writeln();
+	end;
+end;
+
+procedure insertarventa (var a:arbol; v:venta);
+var
+	nue:arbol;
+begin
+	if (a=nil) then begin
+		new(nue);
+		nue^.hi:=nil;
+		nue^.hd:=nil;
+		nue^.dato.cod:= v.codprod;
+		nue^.dato.cant:= v.vendidas;
+		nue^.dato.monto:= v.precio * v.vendidas;
+		a:=nue;
+	end
+	else begin
+		if (v.codprod < a^.dato.cod) then
+			insertarventa(a^.hi,v)
+		else begin
+			if (v.codprod > a^.dato.cod) then
+				insertarventa (a^.hd,v)
+			else begin
+				a^.dato.cant:= a^.dato.cant + v.vendidas;
+				a^.dato.monto := a^.dato.monto + (v.precio * v.vendidas);
+			end;
+		end;
+	end;
+end;
+
+procedure cargararbol (var a:arbol);
+var
+	v:venta;
+begin
+	leerventa (v);
+	while (v.codigo <> -1) do begin
+		insertarventa (a,v);
+		leerventa(v);
+	end;
+end;
+
+{b. Imprimir el contenido del árbol ordenado por código de producto.}
+
+procedure imprimir (a:arbol);
+begin
+	if (a <> nil) then begin
+		imprimir (a^.hi);
+		writeln ('producto numero:', a^.dato.cod);
+		writeln ('cantidad total de unidades vendidas: ', a^.dato.cant);
+		writeln ('monto total obtenido: ', a^.dato.monto);
+		writeln();
+		writeln('-----------------');
+		writeln();
+		imprimir(a^.hd);
+	end;
+end;
+
+{c. Retornar el código de producto con mayor cantidad de unidades vendidas.}
+
+function maximo (a:arbol; max:integer):integer;
+begin
+	if (a <> nil ) then begin
+		if (a^.dato.cant > max) then begin
+			maximo:= a^.dato.cod;
+			maximo (a^.hi, a^.dato.cant);
+			maximo (a^.hd, a^.dato.cant);
+		end;
+	end;
+end;
+
+{d. Retornar la cantidad de códigos que existen en el árbol que son menores que un valor
+que se recibe como parámetro.}
+
+function menores (a:arbol; valor:integer):integer;
+begin
+	if (a=nil) then
+		menores:=0
+	else begin
+		if (a^.dato.cod > valor) then
+			menores:= menores (a^.hi,valor)
+		else
+			menores:= 1 + menores (a^.hi,valor) + menores (a^.hd,valor);
+	end;
+end;
+
+
+//programa principal
+var
+	a:arbol;
+	codigo:integer;
+begin
+	Randomize;
+	a:=nil;
+	cargararbol (a);
+	imprimir (a);
+	//inciso c
+	writeln ('el producto con mas unidades vendidas es el n°: ', maximo (a,-1));
+	//inciso d
+	writeln();
+	writeln ('ingrese un codigo');
+	read(codigo);
+	writeln();
+	writeln ('la cantidad de productos con codigo menor a ', codigo, ' es: ', menores (a,codigo));
+end.
