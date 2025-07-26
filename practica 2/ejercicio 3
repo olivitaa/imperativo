@@ -1,0 +1,103 @@
+{3.- Implementar un programa que invoque a los siguientes módulos.
+a. Un módulo recursivo que retorne un vector de 20 números enteros “random” mayores a
+300 y menores a 1550 (incluidos ambos).
+
+* 
+ Procedure busquedaDicotomica (v: vector;
+Nota: .}
+
+
+program ej3p2;
+const
+	dimF = 20;
+	min = 300;
+	max = 1550;
+type
+	vector = array [1..df] of integer;
+
+//modulos
+
+procedure cargarvector (var v:vector; var dimL:integer);
+var
+	valor:integer;
+begin
+	if (dimL < dimF) then begin
+		dimL:= dimL +1;
+		valor:= min + Random (max-min)+1;
+		v[dimL]:= valor;
+	end;
+end;
+
+{b. Un módulo que reciba el vector generado en a) y lo retorne ordenado. (Utilizar lo realizado
+en la práctica anterior)}
+
+procedure ordenar (var v:vector);
+var
+	i,j,pos:integer;
+	num:integer;
+begin
+	for i:= 1 to dimF-1 do begin
+		pos:=i;
+		for i:= i+1 to dimF do begin
+			if (v[j]> v[pos]) then
+				v[pos]:= v[j];
+		end;
+		num:= v[pos];
+		v[pos]:= v[i];
+		v[i]:= num;
+	end;
+end;
+
+{c. Un módulo que realice una búsqueda dicotómica en el vector, utilizando el siguiente
+encabezado
+*  El parámetro “pos” debe retornar la posición del dato o -1 si el dato no se
+encuentra en el vector}
+
+procedure busquedaDicotomica (v:vector; ini,fin: integer; dato:integer; var pos: indice);
+var
+	medio:integer;
+begin
+	if (v[ini]=nil) then
+		writeln (-1)
+	else begin
+		medio:= v[fin div 2];
+		if (medio=dato) then begin
+			write ('lo encontre');
+			pos:=dato;
+		end
+		else begin
+			if (dato > medio) then
+				busquedaDicotomica(v,medio,fin,dato,pos)
+			else
+				busquedaDicotomica (v,ini,medio,dato,pos);
+		end;
+	end;
+end;
+
+{sino
+Determinar el punto medio del vector
+//Comparar datoABuscar con el contenido del punto medio
+si coincide entonces
+“Lo encontré”
+
+sino
+si datoABuscar < contenido del punto medio entonces
+Buscar (vector, ..., ..., datoABuscar, pos) //mitad inferior
+sino
+Buscar (vector, ..., ..., datoABuscar, pos) //mitad superior}
+
+var
+	v:vector;
+	dimL:integer;
+	valor:integer;
+	pos:integer;
+BEGIN
+	Randomize;
+	dimL:=0;
+	cargarvector(v,dimL);
+	ordenar(v);
+	writeln ('ingrese un valor a buscar');
+	read (valor);
+	busquedaDicotomica(v,1,dimL,valor,pos);
+END.
+
