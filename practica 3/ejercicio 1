@@ -1,1 +1,224 @@
+{Escribir un programa que:
+a. Implemente un módulo que almacene información de socios de un club en un árbol binario
+de búsqueda. De cada socio se debe almacenar número de socio, nombre y edad. La carga
+finaliza con el número de socio 0 y el árbol debe quedar ordenado por número de socio. La
+información de cada socio debe generarse aleatoriamente (nombre se puede leer por teclado).}
+
+program ej1p3;
+type
+	socio = record
+		num:integer;
+		nom: string;
+		edad:integer;
+	end;
+	
+	arbol = ^nodo;
+	nodo = record
+		dato:socio;
+		hi:arbol;
+		hd:arbol;
+	end;
+	
+//modulos
+
+procedure leersocio (var s:socio);
+begin
+	writeln ('ingrese numero de socio');
+	readln (s.num);
+	if (s.num <> 0) then begin
+		writeln ('ingrese nombre y edad');
+		readln (s.nom);
+		readln (s.edad);
+	end;
+end;
+
+procedure agregarhoja (var a:arbol; s:socio);
+begin
+	if (a=nil) then begin
+		new (a);
+		a^.dato:=s;
+		a^.hi:=nil;
+		a^.hd:=nil;
+	end
+	else begin
+		if (s.num <= a^.dato.num) then
+			agregarhoja (a^.hi,s)
+		else
+			agregarhoja(a^.hd,s);
+	end;	
+end;
+
+procedure cargararbol (var a:arbol);
+var
+	s:socio;
+begin
+	leersocio (s);
+	while (s.num <> 0) do begin
+		agregarhoja(a,s);
+		leersocio (s);
+	end;
+end;
+
+{b. Una vez generado el árbol, realice módulos independientes que reciban el árbol como
+parámetro para:
+i. Informar los datos de los socios en orden creciente por número de socio.}
+
+procedure imprimir (s:socio);
+begin
+	writeln ('numero: ',s.num);
+	writeln ('nombre: ',s.nom);
+	writeln ('edad: ',s.edad);	
+	writeln ();
+	writeln ('----------------------------');
+	writeln ();
+end;
+
+procedure imprimircreciente (a:arbol);
+begin
+	if (a <> nil) then begin
+		imprimircreciente	(a^.hi);
+		imprimir (a^.dato);
+		imprimircreciente(a^.hd);	
+	end;
+end;
+
+{
+ii. Informar los datos de los socios en orden decreciente por número de socio.}
+
+procedure imprimirdecreciente (a:arbol);
+begin
+	if (a <> nil) then begin
+		imprimirdecreciente (a^.hd);
+		imprimir (a^.dato);
+		imprimirdecreciente (a^.hi);
+	end;
+end;
+
+{iii. Informar el número de socio con mayor edad. Debe invocar a un módulo recursivo que
+retorne dicho valor.}
+
+procedure mayor (a:arbol; var edadmax:integer; var sociomax:integer);
+begin
+	if (a <> nil) then begin
+		if (a^.dato.edad > edadmax) then begin
+			edadmax:=a^.dato.edad;
+			sociomax:=a^.dato.num;
+		end;
+		mayor(a^.hi,edadmax,sociomax);
+		mayor (a^.hd,edadmax,sociomax);
+	end;
+end;
+
+{iv. Aumentar en 1 la edad de los socios con edad impar e informar la cantidad de socios
+que se les aumentó la edad.}
+
+function par (num:integer):boolean;
+begin
+	par:= ((num mod 2)=0);
+end;
+
+function aumentar (a:arbol):integer;
+begin
+	if (a=nil) then
+		aumentar:=0
+	else begin
+		if (not(par(a^.dato.edad))) then begin
+			a^.dato.edad:= a^.dato.edad +1;
+			aumentar:= 1 + aumentar (a^.hi) + aumentar (a^.hd);
+		end
+		else
+			aumentar:= aumentar (a^.hi) + aumentar (a^.hd);
+	end;
+end;
+
+{vi. Leer un nombre e informar si existe o no existe un socio con ese nombre. Debe invocar
+a un módulo recursivo que reciba el nombre leído y retorne verdadero o falso.}
+
+procedure existe (a:arbol; nombre:string; var ok:boolean);
+begin
+	if (a <> nil) then begin
+		if (ok = false) then begin
+			if (a^.dato.nom = nombre) then
+				ok:= true
+			else begin
+				existe (a^.hi, nombre,ok);
+				existe (a^.hd,nombre,ok);
+			end;
+		end;
+	end;
+end;
+
+{vii. Informar la cantidad de socios. Debe invocar a un módulo recursivo que retorne dicha
+cantidad.}
+
+function cantidad (a:arbol):integer;
+begin
+	if (a=nil) then
+		cantidad:=0
+	else
+		cantidad:= 1+ cantidad (a^.hi) + cantidad (a^.hd);
+end;
+
+{viii. Informar el promedio de edad de los socios. Debe invocar al módulo recursivo del
+inciso vii e invocar a un módulo recursivo que retorne la suma de las edades de los socios.}
+
+function suma (a:arbol):integer;
+begin
+	if (a <> nil) then
+		suma:= a^.dato.edad + suma (a^.hi) + suma (a^.hd)
+	else
+		suma:=0;
+end;
+
+function promedio (a:arbol):integer;
+begin
+	promedio:= suma(a) div cantidad(a);
+end;
+
+//programa principal
+var
+	a:arbol;
+	ok:boolean;
+	nombre:string;
+	edadmax:integer;
+	sociomax:integer;
+begin
+	a:=nil;
+	//inciso a
+	cargararbol(a);
+	//inciso b
+	writeln ('imprimir creciente');
+	writeln ();
+	imprimircreciente(a);
+	writeln ();
+	writeln ('----------------------');
+	writeln ();
+	writeln ('imprimir decreciente');
+	writeln ();
+	imprimirdecreciente(a);
+	writeln ();
+	writeln ('----------------------');
+	writeln ();
+	edadmax:=-1;
+	mayor (a,edadmax,sociomax);
+	if (edadmax = -1) then
+		writeln ('el arbol esta vacio')
+	else
+		writeln ('el numero del socio con la edad mas alta es: ', sociomax);
+	writeln ();
+	writeln ('aumentando en 1...');
+	writeln ('la cantidad de edades aumentadas es: ' , aumentar(a));
+	writeln ('ingresar nombre a buscar');
+	read (nombre);
+	ok:=false;
+	existe (a,nombre,ok);
+	if (ok= false) then
+		writeln ('el nombre no se encuentra en el arbol')
+	else
+		writeln ('el nombre si se encuentra en el arbol');
+		
+	writeln ('la cantidad de socios es: ', cantidad(a));
+	
+	writeln ('el promedio de edad redondeado es ', promedio(a));
+end.
 
