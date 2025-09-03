@@ -1,0 +1,204 @@
+{3.- Netflix ha publicado la lista de películas que estarán disponibles durante el mes de
+septiembre de 2025. De cada película se conoce: código de película, código de género (1:
+acción, 2: aventura, 3: drama, 4: suspenso, 5: comedia, 6: bélico, 7: documental y 8: terror) y
+puntaje promedio otorgado por las críticas.
+Implementar un programa que invoque a módulos para cada uno de los siguientes puntos:
+a. Lea los datos de películas, los almacene por orden de llegada y agrupados por código de
+género, y retorne en una estructura de datos adecuada. La lectura finaliza cuando se lee el
+código de la película -1.
+b. Genere y retorne en un vector, para cada género, el código de película con mayor puntaje
+obtenido entre todas las críticas, a partir de la estructura generada en a)..
+c. Ordene los elementos del vector generado en b) por puntaje utilizando alguno de los dos
+métodos vistos en la teoría.
+d. Muestre el código de película con mayor puntaje y el código de película con menor puntaje,
+del vector obtenido en el punto c)}
+program ejercicio3;
+const 
+	dfgenero = 8;
+	corte = -1;
+type
+	rangogenero = 1..dfgenero;
+	
+	pelicula = record
+		codigo: integer;
+		genero: rangogenero;
+		puntaje: real;
+	end;
+	
+	peliConMaximos = record
+		codigomaximo: integer;
+		puntajemaximo: real;
+	end;
+	
+	lista = ^nodo;
+	nodo = record
+		dato: pelicula;
+		sig: lista;
+	end;
+	
+	punteros = record
+		pri: lista;
+		ult: lista;
+	end;
+	
+	vector = array [rangogenero] of punteros;
+	
+	vectormaximos = array [rangogenero] of peliConMaximos;
+
+//modulos
+
+procedure leerpelicula(var p: pelicula);
+begin 
+	writeln('Ingrese el codigo de pelicula: ');
+	readln(p.codigo);
+	if (p.codigo <> corte) then begin 
+		writeln('Ingrese el genero de pelicula: ');
+		readln(p.genero);
+		writeln('Ingrese el puntaje de la pelicula: ');
+		readln(p.puntaje);
+	end;
+end;
+
+procedure agregaratras(pri:lista; var ult:lista; p: pelicula); // que recibe ult??
+var
+	nue: lista;
+begin
+	new(nue);
+	nue^.dato := p;
+	nue^.sig := nil;
+	
+	if (pri = nil) then begin
+		pri := nue;
+		ult := nue;
+	end
+	else
+		ult^.sig := nue;
+	ult := nue;
+end;
+
+procedure inicializarvec(var v: vector; var vM: vectormaximos);
+var
+	i: rangogenero;
+begin
+	for i := 1 to dfgenero do begin 	
+		v[i].pri := nil;
+		v[i].ult :=nil;
+		vM[i].puntajemaximo := -1;
+    end;
+end;
+
+{procedure cargarPeliConMaximos(var pM: peliConMaximos; p: pelicula);
+begin 
+	pM.codigomaximo := p.codigo;
+	pM.puntajemaximo := p.puntaje;
+end;}
+
+procedure actualizarmaximo (vM:vectormaximos; p:pelicula);
+begin
+    if (vM[p.genero].puntajemaximo < p.puntaje) then begin
+        vM[p.genero].puntajemaximo := p.puntaje;
+        vM[p.genero].codigomaximo := p.codigo;
+    end;
+end;
+
+//puedo dejar un espacio en el vector vacio? xq uso la posicion del vector para el genero, pero si no se ingresan pelis con ese genero, quedaria vacio en el medio. 
+//si no uso esto, puedo cargar el vector usando la dimension logica para dsp recorrerlo, pero no podria hacer el agregar(v[p.genero]), tendria q guardarme adentro del vector tb el genero 
+
+procedure cargardatos(var v: vector; var vM: vectormaximos);
+var
+	p: pelicula;
+	pM: peliConMaximos;
+begin
+	inicializarvec(v, vM);
+	leerpelicula(p);
+	while (p.codigo <> corte) do begin 
+		agregaratras(v[p.genero].pri, v[p.genero].ult, p); //preguntar si puedo aprovechar la carga de datos para actualizar el maximo o si o si tengo que subir toda la data primero y dsp recorrer
+		actualizarmaximo (vM,p);
+		leerpelicula(p);
+	end;
+end;
+
+{procedure obtengomaximo(v: vector; var vM: vectormaximos; var dimlog: integer);
+var
+	i: rangogenero;
+	aux: lista;
+begin
+	dimlog := 0;
+	for i := 1 to dfgenero do begin
+		if (v[i].pri <> nil) then begin 
+			dimlog := dimlog + 1;
+			aux := v[i].pri;
+		end;
+		while (aux <> nil) do begin 
+			if (vM[i].puntajemaximo < aux^.dato.puntaje) then begin
+				vM[dimlog].codigomaximo := aux^.dato.codigo;
+				vM[dimlog].puntajemaximo := aux^.dato.puntaje;
+			end;
+			aux := aux^.sig;
+		end;
+	end;
+end;}
+
+{procedure maximos (var vM:vectormaximos; v:vector);
+var
+    i:rangogenero;
+    codmax:integer;
+    puntajemax:real;
+begin
+    for i:= 1 to dfgenero do begin
+        puntajemax:= -1;
+        while (v[i].pri<> nil) do begin
+            if (v[i].pri^.dato.puntaje > puntajemax) then begin
+                puntajemax:= v[i].pri^.dato.puntaje;
+                codmax:= v[i].pri^.dato.codigo;
+            end;
+            v[i].pri = v[i].pri^.sig;
+        end;
+    end;
+end;}
+
+procedure ordenoporseleccion(var vM: vectormaximos; dimlog: integer); // el vc no tiene nada de puntaje, el inciso solo dice que tenga el codigo con mayor puntaje.
+var
+	i, j, pos : rangogenero;
+	item: peliConMaximos;  
+begin 
+	for i := 1 to dimlog - 1 do begin 
+		pos := i;
+		for j := (i + 1) to dfgenero do 
+			if (vM[j].puntajemaximo < vM[pos].puntajemaximo) then 
+				pos := j;
+		item := vM[pos];
+		vM[pos] :=vM[i];
+		vM[i] := item;
+	end;
+end;
+// d. Muestre el código de película con mayor puntaje y el código de película con menor puntaje, del vector obtenido en el punto c). 
+procedure mostrarmenorymayor(vM: vectormaximos; dimlog: integer);
+begin
+	writeln('El codigo de pelicula con menor puntaje es: ', vM[1].codigomaximo);
+	writeln('El codigo de pelicula con mayor puntaje es: ', vM[dimlog].codigomaximo); 
+end;
+
+//no pide pero para check:
+procedure imprimovectorenorden(vM: vectormaximos; dimlog: integer);
+var
+	i: rangogenero;
+begin
+	for i := 1 to dimlog do 
+		writeln('El codigo maximo de la posicion: ', i , ' es: ', vM[i].codigomaximo , '. Y su puntaje maximo es: ', vM[i].puntajemaximo:0:2);
+end;
+//programa principal
+var
+	v: vector;
+	vM: vectormaximos;
+	dimlog: integer;
+begin
+	cargardatos(v, vM);
+	obtengomaximo(v, vM, dimlog);
+	if (dimlog > 0) then begin
+		writeln('El vector ordenado quedaría de la siguiente manera: ');
+		ordenoporseleccion(vM, dimlog);
+		imprimovectorenorden(vM, dimlog);
+		mostrarmenorymayor(vM, dimlog);
+	end;
+end.
